@@ -1,0 +1,29 @@
+version: '3'
+networks:
+  traefik:
+
+services:
+  reverse-proxy:
+    # The official v2.0 Traefik docker image
+    image: traefik:v2.0
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP port
+      - 8081:80
+      # The Web UI (enabled by --api.insecure=true)
+      - 8080:8080
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik
+  whoami:
+   # A container that exposes an API to show its IP address
+    image: containous/whoami
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`teste.nerdseverino.local`)"
+#    ports:
+#      - 80:80
+    networks:
+      - traefik

@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+  samba:
+    container_name: samba
+    hostname: samba
+    image: sixeyed/samba
+    #Nos volumes o formato é pasta_local:pasta_no_container
+    volumes:
+      - $PWD/data:/mnt/backup
+      - $PWD/samba/cliente1:/mnt/cliente1
+    ports:
+      - 139:139
+      - 445:445
+      - 137:137/udp
+      - 138:138/udp
+    # Aqui no command onde é gerado o smb.conf precisa de um comando pra cada compartilhamento  
+    command: samba.sh -s "backup;/mnt/backup;yes;no;yes;all", samba.sh -s "cliente1;/mnt/cliente1;yes;no;yes;all" 
+    mem_limit: 1g
+    restart: always

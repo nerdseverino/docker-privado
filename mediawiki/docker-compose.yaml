@@ -1,0 +1,39 @@
+#https://blog.programster.org/deploy-your-own-mediawiki-wiki
+version: '3'
+services:
+  mediawiki:
+    container_name: wiki
+    image: mediawiki
+    restart: always
+    ports:
+      - 8080:80
+    links:
+      - database
+    volumes:
+      - $HOME/mediawiki/images:/var/www/html/images
+      # After initial setup, download LocalSettings.php to the same directory as
+      # this yaml and uncomment the following line and use compose to restart
+      # the mediawiki service
+      - $HOME/mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+     labels:     
+      - traefik.backend=portainer
+      - traefik.frontend.rule=Host:portainer.nerdseverino.local
+      - traefik.port=80
+
+  database:
+    image: mariadb
+    container_name: dbwiki
+    restart: always
+    ports:
+        - 3306:3306
+    environment:
+      # @see https://phabricator.wikimedia.org/source/mediawiki/browse/master/includes/DefaultSettings.php
+      # dbwiki://localhost
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+      MYSQL_DATABASE: my_wiki
+      MYSQL_USER: wikiuser
+      MYSQL_PASSWORD: example 
+    volumes:
+       - $HOME/mediawiki/umes/mysql/data:/var/lib/mysql
+    labels:
+     - traefik.enable=false
