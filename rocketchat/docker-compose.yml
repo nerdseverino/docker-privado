@@ -39,6 +39,7 @@ services:
      #- ./data/dump:/dump
     command: mongod --smallfiles --oplogSize 128 --replSet rs0 --storageEngine=mmapv1
     labels:
+       - "traefik.enable=false"
       
 
   # this container's job is just run the command to initialize the replica set.
@@ -58,6 +59,8 @@ services:
         done; (exit $$s)"
     depends_on:
       - mongo
+    labels:
+       - "traefik.enable=false"
 
   # hubot, the popular chatbot (add the bot user first and change the password before starting this image)
   hubot:
@@ -80,3 +83,5 @@ services:
   # this is used to expose the hubot port for notifications on the host on port 3001, e.g. for hubot-jenkins-notifier
     ports:
       - 3001:8080
+    labels:
+       - "traefik.enable=false"  
