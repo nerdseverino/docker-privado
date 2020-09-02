@@ -1,0 +1,105 @@
+version: '3'
+networks:
+  traefik:
+volumes:
+  portainer_data:
+  nextcloud_data:
+#
+services:
+  traefik:
+    image: traefik:v2.2
+    command: --api.insecure=true --providers.docker
+    ports:
+      - 8081:80
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik
+#
+  whoami:
+    image: ctmagazin/whoami 
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`teste.nerdseverino.local`)"
+    ports:
+     - 8085:80
+    networks:
+      - traefik
+# 
+  nextcloud:
+    image: armhero/nextcloud
+    volumes:
+      #- $PWD/nextcloud:/var/www/html  
+      - nextcloud_data:/data
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`nextcloud.nerdseverino.local`)"
+    ports:
+      - 8091:80
+    networks:
+      - traefik
+#
+  portainer:
+    image: portainer/portainer:latest
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 9000:9000
+      - 8000:8000
+    labels:
+      - traefik.backend=portainer
+      - traefik.frontend.rule=Host:portainer.nerdseverino.local
+      - traefik.port=9000
+      - traefik.port=8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - traefik
+#        
+  rpi-monitor:
+    image: michaelmiklis/rpi-monitor:latest
+    volumes:
+      - /opt/vc:/opt/vc
+      - /boot:/boot
+      - /sys:/dockerhost/sys:ro
+      - /etc:/dockerhost/etc:ro
+      - /proc:/dockerhost/proc:ro
+      - /usr/lib:/dockerhost/usr/lib:ro
+    devices:
+      - "/dev/vchiq:/dev/vchiq" 
+      - "/dev/vcsm:/dev/vcsm"  
+    restart: unless-stopped
+    ports:
+      - 8888:8888
+    labels:
+      - traefik.backend=rpi-monitor
+      - traefik.frontend.rule=Host:rpimonitor.nerdseverino.local
+      - traefik.port=8888
+    networks:
+      - traefik
+#
+  pihole:
+    domainname: nerdseverino.local 
+    hostname: pihole
+    image: pihole/pihole:latest
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+      - '67:67/udp'
+      - '8090:80'
+      - '443:443'
+    restart: unless-stopped
+    volumes:
+      - $PWD/docker/pihole/pihole:/etc/pihole
+      - $PWD/docker/pihole/pihole.log:/var/log/pihole.log
+      - $PWD/docker/pihole/dnsmasq.d:/etc/dnsmasq.d
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - ServerIP=$hostIP
+      - TZ=$TZ
+      - WEBPASSWORD=suporte
+      - DNS1=127.0.0.1
+      - DNS2=1.1.1.1
+    networks:
+      - traefik   
