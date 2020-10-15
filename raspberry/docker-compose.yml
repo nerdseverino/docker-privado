@@ -7,8 +7,8 @@ volumes:
 #
 services:
   traefik:
-    image: traefik:v2.2
-    command: --api.insecure=true --providers.docker
+    image: traefik:v2.0
+    command: --api.insecure=true --providers.docker --log.level=DEBUG
     ports:
       - 8081:80
       - 8080:8080
@@ -21,8 +21,8 @@ services:
     image: ctmagazin/whoami 
     labels:
       - "traefik.http.routers.whoami.rule=Host(`teste.nerdseverino.local`)"
-    ports:
-     - 8085:80
+#    ports:
+#     - 80:80
     networks:
       - traefik
 # 
@@ -32,24 +32,24 @@ services:
       #- $PWD/nextcloud:/var/www/html  
       - nextcloud_data:/data
     labels:
-      - "traefik.http.routers.whoami.rule=Host(`nextcloud.nerdseverino.local`)"
-    ports:
-      - 8091:80
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.nerdseverino.local`)"
+#    ports:
+#      - 80:80
     networks:
       - traefik
 #
   portainer:
     image: portainer/portainer:latest
     command: -H unix:///var/run/docker.sock
-    restart: always
-    ports:
-      - 9000:9000
-      - 8000:8000
+#    restart: always
+#    ports:
+#      - 9000:9000
+#      - 8000:8000
     labels:
       - traefik.backend=portainer
-      - traefik.frontend.rule=Host:portainer.nerdseverino.local
+        #      - traefik.frontend.rule=Host:portainer.nerdseverino.local
+      - "traefik.http.routers.portainer.rule=Host(`portainer.nerdseverino.local`)"
       - traefik.port=9000
-      - traefik.port=8000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -68,39 +68,14 @@ services:
     devices:
       - "/dev/vchiq:/dev/vchiq" 
       - "/dev/vcsm:/dev/vcsm"  
-    restart: unless-stopped
-    ports:
-      - 8888:8888
+#    restart: unless-stopped
+#    ports:
+#      - 8888:8888
     labels:
       - traefik.backend=rpi-monitor
-      - traefik.frontend.rule=Host:rpimonitor.nerdseverino.local
+        #      - traefik.frontend.rule=Host:rpimonitor.nerdseverino.local
+      - "traefik.http.routers.rpimonitor.rule=Host(`rpimonitor.nerdseverino.local`)"
       - traefik.port=8888
     networks:
       - traefik
 #
-  pihole:
-    container_name: pihole
-    image: lewixlabs/pihole-pizero
-    ports:
-      - 53:53/tcp
-      - 53:53/udp
-      - 67:67/udp
-      - 8092:80/tcp
-      - 443:443/tcp
-    environment:
-      TZ: America/Sao_Paulo
-      WEBPASSWORD: suporte
-      VIRTUAL_HOST: pihole.local
-    volumes:
-       - './pihole/etc-pihole/:/etc/pihole/'
-       - './pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
-    dns:
-      - 127.0.0.1
-      - 1.1.1.1
-    # Recommended but not required (DHCP needs NET_ADMIN)
-    # https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
-    cap_add:
-      - NET_ADMIN
-#    restart: unless-stopped
-    networks:
-      - traefik   
