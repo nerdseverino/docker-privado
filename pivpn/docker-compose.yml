@@ -1,0 +1,12 @@
+version: '2.1'
+services:
+  pivpn:
+    container_name: pivpn
+    image: xptsp/pivpn
+    privileged: true
+    network_mode: "host"
+    ports:
+      - 1194:1194
+    volumes:
+      - /home/docker/pivpn/ovpns:/home/pivpn/ovpns
+      - /home/docker/pivpn/openvpn:/etc/openvpn
